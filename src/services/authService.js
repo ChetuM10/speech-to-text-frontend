@@ -155,7 +155,7 @@ const authService = {
    * Google OAuth sign in
    */
   async googleSignIn() {
-    window.location.href = `${API_URL}api//auth/google`;
+    window.location.href = `${API_URL}api/auth/google`;
   },
 };
 
