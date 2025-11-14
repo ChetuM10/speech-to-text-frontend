@@ -1,10 +1,11 @@
-import { useState } from 'react';
-import RecordButton from '../components/RecordButton';
-import HistoryList from '../components/HistoryList';
-import UserProfile from '../components/UserProfile';
+import { useState } from "react";
+import RecordButton from "../components/RecordButton";
+import HistoryList from "../components/HistoryList";
+import UserProfile from "../components/UserProfile";
+import API_URL from "../config/api";
 
 const Dashboard = () => {
-  const [transcription, setTranscription] = useState('');
+  const [transcription, setTranscription] = useState("");
   const [loading, setLoading] = useState(false);
   const [recording, setRecording] = useState(false);
   const [showAllHistory, setShowAllHistory] = useState(false);
@@ -15,23 +16,23 @@ const Dashboard = () => {
     try {
       setLoading(true);
       const uploadFormData = new FormData();
-      uploadFormData.append('audio', file);
+      uploadFormData.append("audio", file);
 
-      const response = await fetch('http://localhost:5000/api/transcribe', {
-        method: 'POST',
+      const response = await fetch(`${API_URL}/api/transcribe`, {
+        method: "POST",
         body: uploadFormData,
-        credentials: 'include', // Include cookies for auth
+        credentials: "include", // Include cookies for auth
       });
 
       const data = await response.json();
 
       if (data.success) {
-        setTranscription(data.transcription || '');
+        setTranscription(data.transcription || "");
       } else {
-        throw new Error(data.error || 'Transcription failed');
+        throw new Error(data.error || "Transcription failed");
       }
     } catch (error) {
-      console.error('Upload error:', error);
+      console.error("Upload error:", error);
       setTranscription(`Error: ${error.message}`);
     } finally {
       setLoading(false);
@@ -47,9 +48,9 @@ const Dashboard = () => {
   const downloadTranscription = () => {
     if (!transcription) return;
 
-    const blob = new Blob([transcription], { type: 'text/plain' });
+    const blob = new Blob([transcription], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = `transcription-${Date.now()}.txt`;
     a.click();
@@ -68,7 +69,9 @@ const Dashboard = () => {
           <div className="lg:col-span-2 space-y-6">
             {/* Upload & Record Section */}
             <div className="bg-gray-800 rounded-2xl p-8 border border-gray-700">
-              <h2 className="text-2xl font-bold text-white mb-6">Record or Upload Audio</h2>
+              <h2 className="text-2xl font-bold text-white mb-6">
+                Record or Upload Audio
+              </h2>
 
               {/* File Upload */}
               <div className="mb-6">
@@ -119,7 +122,9 @@ const Dashboard = () => {
               {loading && (
                 <div className="text-center py-12">
                   <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-400"></div>
-                  <p className="mt-4 text-gray-400">Transcribing your audio...</p>
+                  <p className="mt-4 text-gray-400">
+                    Transcribing your audio...
+                  </p>
                 </div>
               )}
 
@@ -145,7 +150,9 @@ const Dashboard = () => {
                     />
                   </svg>
                   <p>Your transcription will appear here.</p>
-                  <p className="text-sm mt-2">Upload an audio file or record to get started</p>
+                  <p className="text-sm mt-2">
+                    Upload an audio file or record to get started
+                  </p>
                 </div>
               )}
             </div>

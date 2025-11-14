@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import API_URL from '../config/api';
 
 export default function HistoryList() {
   const [history, setHistory] = useState([]);
@@ -9,7 +10,7 @@ export default function HistoryList() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("http://localhost:5000/api/history");
+      const response = await fetch(`${API_URL}/api/history`);
       if (!response.ok) throw new Error("Failed to fetch history");
 
       const data = await response.json();
@@ -33,7 +34,7 @@ export default function HistoryList() {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/history/${id}`, {
+      const response = await fetch(`${API_URL}/api/history/${id}`, {
         method: "DELETE",
       });
       const data = await response.json();
