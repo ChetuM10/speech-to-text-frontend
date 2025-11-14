@@ -17,28 +17,29 @@ function Loader() {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        minHeight: "100vh",
-        gap: "1rem",
-        color: "var(--text-secondary)",
-        backgroundColor: "var(--bg-primary, #111827)",
+        height: "100vh",
+        background: "linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%)",
+        color: "#00d9ff",
+        fontFamily: "system-ui, sans-serif",
       }}
     >
       <div
         style={{
-          width: "40px",
-          height: "40px",
-          border: "3px solid var(--border-light, #374151)",
-          borderTopColor: "var(--accent-primary, #06b6d4)",
-          borderRadius: "50%",
-          animation: "spin 0.8s linear infinite",
+          fontSize: "2.5rem",
+          marginBottom: "1rem",
+          animation: "pulse 2s ease-in-out infinite",
         }}
-      ></div>
-      <p style={{ fontSize: "1rem", fontWeight: 500 }}>Loading interface…</p>
-      <p
-        style={{ fontSize: "0.875rem", color: "var(--text-tertiary, #6b7280)" }}
+      >
+        🎤
+      </div>
+      <div style={{ fontSize: "1.25rem", fontWeight: "600" }}>
+        Loading interface…
+      </div>
+      <div
+        style={{ fontSize: "0.875rem", color: "#64748b", marginTop: "0.5rem" }}
       >
         Initializing authentication...
-      </p>
+      </div>
     </div>
   );
 }
@@ -50,32 +51,7 @@ createRoot(document.getElementById("root")).render(
         <Suspense fallback={<Loader />}>
           <App />
         </Suspense>
-        {/* Toast notifications for auth feedback */}
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            duration: 3000,
-            style: {
-              background: "var(--bg-secondary, #1f2937)",
-              color: "var(--text-primary, #fff)",
-              border: "1px solid var(--border-light, #374151)",
-              borderRadius: "0.5rem",
-              fontSize: "0.875rem",
-            },
-            success: {
-              iconTheme: {
-                primary: "var(--accent-success, #10b981)",
-                secondary: "#fff",
-              },
-            },
-            error: {
-              iconTheme: {
-                primary: "var(--accent-danger, #ef4444)",
-                secondary: "#fff",
-              },
-            },
-          }}
-        />
+        <Toaster position="top-right" />
       </AuthProvider>
     </BrowserRouter>
   </StrictMode>

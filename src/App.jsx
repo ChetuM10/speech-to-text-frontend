@@ -18,23 +18,22 @@ function PageLoader() {
   return (
     <div
       style={{
-        minHeight: "100vh",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "var(--bg-primary)",
+        height: "100vh",
+        fontSize: "1.5rem",
+        color: "var(--accent-cyan)",
       }}
     >
-      <div style={{ textAlign: "center" }}>
-        <div className="spinner" style={{ margin: "0 auto 16px" }}></div>
-        <p style={{ color: "var(--text-secondary)" }}>Loading...</p>
-      </div>
+      Loading...
     </div>
   );
 }
 
-// Main Dashboard Component (extracted from first App.js)
+// Main Dashboard Component
 function Dashboard() {
+  const { user, logout } = useAuth(); // ← FIXED: Changed from 'signout' to 'logout'
   const [transcription, setTranscription] = useState("");
   const [loading, setLoading] = useState(false);
   const [recording, setRecording] = useState(false);
@@ -46,60 +45,115 @@ function Dashboard() {
     setToast({ message, type });
   };
 
-  const handleFileUpload = async (file) => {
-    if (!file) return;
+  const handleFileUpload = async (files) => {
+    // `files` may be a FileList from an <input>. Use the first file.
+    const file = files && files[0] ? files[0] : null;
+    if (!file) {
+      showToast("No file selected", "error");
+      return;
+    }
+
     try {
       setLoading(true);
       const uploadFormData = new FormData();
       uploadFormData.append("audio", file);
 
+      const token = sessionStorage.getItem("accessToken");
       const response = await fetch("http://localhost:5000/api/transcribe", {
         method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: "include",
         body: uploadFormData,
       });
 
       const data = await response.json();
-      if (data.success) {
-        setTranscription(data.transcription || "");
-        showToast("Transcription completed!", "success");
-      } else {
+
+      if (!response.ok) {
         throw new Error(data.error || "Transcription failed");
       }
+
+      setTranscription(data.transcription || data.text);
+      showToast("✅ Transcription completed!", "success");
     } catch (error) {
       console.error("Upload error:", error);
-      setTranscription(`Error: ${error.message}`);
-      showToast(`Error: ${error.message}`, "error");
+      showToast(`❌ ${error.message}`, "error");
     } finally {
       setLoading(false);
     }
   };
 
-  const copyTranscription = () => {
+  const handleRecordingComplete = async (audioBlob) => {
+    try {
+      setLoading(true);
+      const formData = new FormData();
+      formData.append("audio", audioBlob, "recording.wav");
+
+      const token = sessionStorage.getItem("accessToken");
+      const response = await fetch("http://localhost:5000/api/transcribe", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: "include",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Transcription failed");
+      }
+
+      setTranscription(data.transcription || data.text);
+      showToast("✅ Recording transcribed!", "success");
+    } catch (error) {
+      console.error("Recording error:", error);
+      showToast(`❌ ${error.message}`, "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const copyToClipboard = () => {
     if (transcription) {
       navigator.clipboard.writeText(transcription);
-      showToast("Copied to clipboard!", "success");
+      showToast("📋 Copied to clipboard!", "success");
     }
   };
 
   const downloadTranscription = () => {
-    if (!transcription) return;
-    const blob = new Blob([transcription], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `transcription-${Date.now()}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast("Download started!", "success");
+    if (transcription) {
+      const blob = new Blob([transcription], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `transcription-${Date.now()}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast("⬇️ Downloaded!", "success");
+    }
+  };
+
+  // ✅ FIXED LOGOUT HANDLER
+  const handleLogout = async () => {
+    try {
+      await logout(); // ← FIXED: Changed from 'signout()' to 'logout()'
+      showToast("👋 Signed out successfully!", "success");
+    } catch (error) {
+      console.error("Logout error:", error);
+      showToast(`❌ Logout failed`, "error");
+    }
   };
 
   return (
     <div className="new-layout">
-      {/* Top Navbar */}
+      {/* TOP NAVBAR */}
       <nav className="navbar">
         <div className="navbar__left">
           <div className="navbar__logo">
-            <span className="navbar__icon">🎤</span>
+            <div className="navbar__icon">🎤</div>
             <div>
               <h1 className="navbar__title">Speech to Text</h1>
               <p className="navbar__subtitle">
@@ -108,97 +162,93 @@ function Dashboard() {
             </div>
           </div>
         </div>
+
         <div className="navbar__right">
+          {/* HISTORY BUTTON - Enhanced */}
           <button
-            className="navbar__btn"
-            onClick={() => setShowAllHistory(!showAllHistory)}
+            className="navbar__btn--modern"
+            onClick={() => setShowAllHistory(true)}
           >
-            📜 History
+            <span className="btn-icon">📋</span>
+            History
           </button>
-          <div className="navbar__status">
-            <span className="status-dot"></span>
-            Powered by AssemblyAI
-          </div>
+
+          {/* USER INFO & SIGN OUT - Enhanced */}
+          {user && (
+            <>
+              <div className="navbar__user-badge">
+                <span className="status-dot"></span>
+                <span>{user.name || user.email}</span>
+              </div>
+
+              <button className="navbar__btn--signout" onClick={handleLogout}>
+                <span className="btn-icon">🚪</span>
+                Sign Out
+              </button>
+            </>
+          )}
         </div>
       </nav>
 
-      {/* Main Content - Two Columns */}
-      <main className="main-content">
-        {/* Left Column - Record & Upload */}
-        <aside className="left-panel">
+      {/* MAIN CONTENT - TWO COLUMN LAYOUT */}
+      <div className="main-content">
+        {/* LEFT PANEL - INPUT METHODS */}
+        <div className="left-panel">
           <div className="panel-card">
             <h2 className="panel-title">Choose Input Method</h2>
             <p className="panel-subtitle">Record live or upload audio file</p>
 
-            {/* RECORD CARD - TOP */}
+            {/* RECORD CARD */}
             <div className="icon-card icon-card--record">
               <div className="icon-card__icon">🎤</div>
               <h3 className="icon-card__title">Record Audio</h3>
               <p className="icon-card__subtitle">Live microphone recording</p>
               <div className="icon-card__action">
                 <RecordButton
-                  onFileReady={handleFileUpload}
+                  // RecordButton expects `onFileReady`, `onStart`, and `onStop`
+                  onFileReady={handleRecordingComplete}
                   onStart={() => setRecording(true)}
                   onStop={() => setRecording(false)}
-                  recording={recording}
                 />
               </div>
             </div>
 
-            {/* Divider */}
-            <div className="divider-or">
-              <span>OR</span>
-            </div>
+            <div className="divider-or">OR</div>
 
-            {/* UPLOAD CARD - BOTTOM */}
-            <label
-              htmlFor="file-upload"
-              className="icon-card icon-card--upload"
-            >
+            {/* UPLOAD CARD */}
+            <div className="icon-card icon-card--upload">
               <div className="icon-card__icon">📁</div>
               <h3 className="icon-card__title">Upload File</h3>
               <p className="icon-card__subtitle">MP3, WAV, M4A supported</p>
               <div className="icon-card__action">
-                <span className="browse-btn">Browse Files</span>
+                <label htmlFor="file-upload" className="browse-btn">
+                  Browse Files
+                </label>
+                <input
+                  id="file-upload"
+                  type="file"
+                  accept="audio/*"
+                  onChange={(e) => handleFileUpload(e.target.files)}
+                  style={{ display: "none" }}
+                />
               </div>
-              <input
-                id="file-upload"
-                type="file"
-                accept=".mp3,.wav,.m4a,.webm"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleFileUpload(file);
-                }}
-                style={{ display: "none" }}
-              />
-            </label>
-
-            {/* Status Badge */}
-            <div className="status-badge">
-              <span className="status-badge__dot"></span>
-              Powered by AssemblyAI
             </div>
           </div>
-        </aside>
+        </div>
 
-        {/* Right Column - Transcription */}
-        <section className="right-panel">
+        {/* RIGHT PANEL - TRANSCRIPTION */}
+        <div className="right-panel">
           <div className="transcription-panel">
             <div className="transcription-header">
               <h2 className="transcription-title">Transcription</h2>
               {transcription && (
                 <div className="transcription-actions">
-                  <button
-                    className="action-btn"
-                    onClick={copyTranscription}
-                    title="Copy"
-                  >
+                  <button className="action-btn" onClick={copyToClipboard}>
                     📋 Copy
                   </button>
                   <button
                     className="action-btn"
                     onClick={downloadTranscription}
-                    title="Download"
                   >
                     ⬇️ Download
                   </button>
@@ -207,50 +257,52 @@ function Dashboard() {
             </div>
 
             <div className="transcription-content">
-              {loading ? (
+              {loading && (
                 <div className="loading-state">
                   <div className="spinner"></div>
                   <p>Transcribing your audio...</p>
                 </div>
-              ) : transcription ? (
-                <div className="transcription-text">{transcription}</div>
-              ) : (
+              )}
+
+              {!loading && !transcription && (
                 <div className="empty-state">
-                  <span className="empty-icon">✨</span>
+                  <div className="empty-icon">🎙️</div>
                   <p>Your transcription will appear here.</p>
                   <p className="empty-hint">
                     Upload an audio file or record to get started
                   </p>
                 </div>
               )}
+
+              {!loading && transcription && (
+                <div className="transcription-text">{transcription}</div>
+              )}
             </div>
           </div>
-        </section>
-      </main>
+        </div>
+      </div>
 
-      {/* RIGHT SIDEBAR - HISTORY */}
-      <aside
+      {/* HISTORY SIDEBAR */}
+      <div
         className={`history-sidebar ${
           showAllHistory ? "history-sidebar--open" : ""
         }`}
       >
         <div className="history-sidebar__header">
-          <h2 className="history-sidebar__title">📜 Transcription History</h2>
+          <h3 className="history-sidebar__title">📂 History</h3>
           <button
             className="history-sidebar__close"
             onClick={() => setShowAllHistory(false)}
-            title="Close History"
           >
             ✕
           </button>
         </div>
-
         <div className="history-sidebar__content">
-          <HistoryList />
+          <HistoryList onTranscriptionSelect={setTranscription} />
         </div>
-      </aside>
+      </div>
 
-      {/* Toast Notifications */}
+      {/* TOAST NOTIFICATION */}
       {toast && (
         <Toast
           message={toast.message}
@@ -262,53 +314,56 @@ function Dashboard() {
   );
 }
 
-// Main App Component with routing
+// Main App Router
 export default function App() {
-  const { isAuthenticated, loading } = useAuth();
-
-  // Show loader while checking authentication
-  if (loading) {
-    return <PageLoader />;
-  }
-
   return (
-    <Suspense fallback={<PageLoader />}>
-      <Routes>
-        {/* Public Routes - Redirect to dashboard if already authenticated */}
-        <Route
-          path="/signin"
-          element={isAuthenticated ? <Navigate to="/" replace /> : <SignIn />}
-        />
-        <Route
-          path="/signup"
-          element={isAuthenticated ? <Navigate to="/" replace /> : <SignUp />}
-        />
-        <Route
-          path="/forgot-password"
-          element={
-            isAuthenticated ? <Navigate to="/" replace /> : <ForgotPassword />
-          }
-        />
-        <Route
-          path="/reset-password"
-          element={
-            isAuthenticated ? <Navigate to="/" replace /> : <ResetPassword />
-          }
-        />
+    <Routes>
+      {/* Auth Routes */}
+      <Route
+        path="/signin"
+        element={
+          <Suspense fallback={<PageLoader />}>
+            <SignIn />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/signup"
+        element={
+          <Suspense fallback={<PageLoader />}>
+            <SignUp />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/forgot-password"
+        element={
+          <Suspense fallback={<PageLoader />}>
+            <ForgotPassword />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/reset-password"
+        element={
+          <Suspense fallback={<PageLoader />}>
+            <ResetPassword />
+          </Suspense>
+        }
+      />
 
-        {/* Protected Routes - Require authentication */}
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
+      {/* Protected Dashboard Route */}
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
 
-        {/* Catch all - redirect to home */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Suspense>
+      {/* Catch all redirect */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }

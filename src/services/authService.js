@@ -1,28 +1,28 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const authService = {
   /**
    * Sign up new user
    */
   async signup(userData) {
-    const response = await fetch(`${API_URL}/auth/signup`, {
-      method: 'POST',
+    const response = await fetch(`${API_URL}/api/auth/signup`, {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
-      credentials: 'include',
+      credentials: "include",
       body: JSON.stringify(userData),
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || 'Signup failed');
+      throw new Error(data.error || "Signup failed");
     }
 
     // Store token in sessionStorage
     if (data.accessToken) {
-      sessionStorage.setItem('accessToken', data.accessToken);
+      sessionStorage.setItem("accessToken", data.accessToken);
     }
 
     return data;
@@ -32,76 +32,82 @@ const authService = {
    * Sign in user
    */
   async signin(credentials) {
-    const response = await fetch(`${API_URL}/auth/signin`, {
-      method: 'POST',
+    const response = await fetch(`${API_URL}/api/auth/signin`, {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
-      credentials: 'include',
+      credentials: "include",
       body: JSON.stringify(credentials),
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || 'Sign in failed');
+      throw new Error(data.error || "Sign in failed");
     }
 
     // Store token in sessionStorage
     if (data.accessToken) {
-      sessionStorage.setItem('accessToken', data.accessToken);
+      sessionStorage.setItem("accessToken", data.accessToken);
     }
 
-    return data.user;
+    // Return full response (consistent with signup)
+    return data;
   },
 
   /**
    * Sign out user
    */
-  async signout() {
-    const response = await fetch(`${API_URL}/auth/logout`, {
-      method: 'POST',
+  // Provide both `logout` and `signout` names for compatibility
+  async logout() {
+    const response = await fetch(`${API_URL}/api/auth/logout`, {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`,
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
       },
-      credentials: 'include',
+      credentials: "include",
     });
 
     // Clear token regardless of response
-    sessionStorage.removeItem('accessToken');
+    sessionStorage.removeItem("accessToken");
 
     if (!response.ok) {
       const data = await response.json();
-      throw new Error(data.error || 'Logout failed');
+      throw new Error(data.error || "Logout failed");
     }
 
     return true;
+  },
+
+  async signout() {
+    return await this.logout();
   },
 
   /**
    * Get current user
    */
   async getCurrentUser() {
-    const token = sessionStorage.getItem('accessToken');
-    
+    const token = sessionStorage.getItem("accessToken");
+
     if (!token) {
-      throw new Error('No token found');
+      throw new Error("No token found");
     }
 
-    const response = await fetch(`${API_URL}/auth/me`, {
-      method: 'GET',
+    const response = await fetch(`${API_URL}/api/auth/me`, {
+      method: "GET",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      credentials: 'include',
+      credentials: "include",
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || 'Failed to get user');
+      throw new Error(data.error || "Failed to get user");
     }
 
     return data.user;
@@ -111,19 +117,19 @@ const authService = {
    * Forgot password
    */
   async forgotPassword(email) {
-    const response = await fetch(`${API_URL}/auth/forgot-password`, {
-      method: 'POST',
+    const response = await fetch(`${API_URL}/api/auth/forgot-password`, {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
-      credentials: 'include',
+      credentials: "include",
       body: JSON.stringify({ email }),
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || 'Failed to send reset code');
+      throw new Error(data.error || "Failed to send reset code");
     }
 
     return data;
@@ -133,29 +139,22 @@ const authService = {
    * Reset password
    */
   async resetPassword(resetData) {
-    const response = await fetch(`${API_URL}/auth/reset-password`, {
-      method: 'POST',
+    const response = await fetch(`${API_URL}/api/auth/reset-password`, {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
-      credentials: 'include',
+      credentials: "include",
       body: JSON.stringify(resetData),
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || 'Failed to reset password');
+      throw new Error(data.error || "Failed to reset password");
     }
 
     return data;
-  },
-
-  /**
-   * Google OAuth sign in
-   */
-  async googleSignIn() {
-    window.location.href = `${API_URL}api/auth/google`;
   },
 };
 
