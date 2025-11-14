@@ -1,10 +1,40 @@
-import { useState } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { Suspense, lazy, useState } from "react";
 import "./App.css";
+import ProtectedRoute from "./context/ProtectedRoute";
+import { useAuth } from "./context/AuthContext";
 import RecordButton from "./components/RecordButton";
 import HistoryList from "./components/HistoryList";
 import Toast from "./components/Toast";
 
-export default function App() {
+// Lazy load auth pages
+const SignIn = lazy(() => import("./pages/auth/SignIn"));
+const SignUp = lazy(() => import("./pages/auth/SignUp"));
+const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
+
+// Loading fallback component
+function PageLoader() {
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "var(--bg-primary)",
+      }}
+    >
+      <div style={{ textAlign: "center" }}>
+        <div className="spinner" style={{ margin: "0 auto 16px" }}></div>
+        <p style={{ color: "var(--text-secondary)" }}>Loading...</p>
+      </div>
+    </div>
+  );
+}
+
+// Main Dashboard Component (extracted from first App.js)
+function Dashboard() {
   const [transcription, setTranscription] = useState("");
   const [loading, setLoading] = useState(false);
   const [recording, setRecording] = useState(false);
@@ -229,5 +259,56 @@ export default function App() {
         />
       )}
     </div>
+  );
+}
+
+// Main App Component with routing
+export default function App() {
+  const { isAuthenticated, loading } = useAuth();
+
+  // Show loader while checking authentication
+  if (loading) {
+    return <PageLoader />;
+  }
+
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        {/* Public Routes - Redirect to dashboard if already authenticated */}
+        <Route
+          path="/signin"
+          element={isAuthenticated ? <Navigate to="/" replace /> : <SignIn />}
+        />
+        <Route
+          path="/signup"
+          element={isAuthenticated ? <Navigate to="/" replace /> : <SignUp />}
+        />
+        <Route
+          path="/forgot-password"
+          element={
+            isAuthenticated ? <Navigate to="/" replace /> : <ForgotPassword />
+          }
+        />
+        <Route
+          path="/reset-password"
+          element={
+            isAuthenticated ? <Navigate to="/" replace /> : <ResetPassword />
+          }
+        />
+
+        {/* Protected Routes - Require authentication */}
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Catch all - redirect to home */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
   );
 }

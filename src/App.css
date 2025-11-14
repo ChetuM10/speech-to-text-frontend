@@ -422,6 +422,7 @@
 .action-btn:hover {
   background: rgba(0, 217, 255, 0.2);
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 217, 255, 0.3);
 }
 
 .transcription-content {
@@ -501,6 +502,26 @@
   max-height: 600px;
   overflow-y: auto;
   align-self: flex-start;
+  border: 1px solid var(--border-subtle);
+}
+
+/* Custom scrollbar for transcription text */
+.transcription-text::-webkit-scrollbar {
+  width: 10px;
+}
+
+.transcription-text::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+  border-radius: 6px;
+}
+
+.transcription-text::-webkit-scrollbar-thumb {
+  background: var(--accent-cyan);
+  border-radius: 6px;
+}
+
+.transcription-text::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-electric);
 }
 
 /* =====================
@@ -532,7 +553,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 24px 24px;
+  padding: 24px;
   border-bottom: 1px solid var(--border-subtle);
   background: rgba(0, 0, 0, 0.3);
   flex-shrink: 0;
@@ -705,11 +726,13 @@
 .history-card__btn--download:hover {
   background: rgba(0, 217, 255, 0.1);
   border-color: var(--accent-cyan);
+  box-shadow: 0 4px 12px rgba(0, 217, 255, 0.3);
 }
 
 .history-card__btn--delete:hover {
   background: rgba(239, 68, 68, 0.1);
   border-color: #ef4444;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
 /* History Loading State */
@@ -765,6 +788,7 @@
 .btn-retry:hover {
   background: rgba(239, 68, 68, 0.2);
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
 /* History Empty State */
@@ -821,6 +845,7 @@
 .btn-primary {
   background: linear-gradient(135deg, var(--accent-purple), #ec4899);
   color: white;
+  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
 }
 
 .btn-primary:hover {
@@ -889,6 +914,7 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   z-index: 10000;
   animation: slide-in-toast 0.3s ease;
+  min-width: 300px;
 }
 
 @keyframes slide-in-toast {
@@ -926,10 +952,11 @@
 .toast__message {
   color: var(--text-primary);
   font-weight: 600;
+  flex: 1;
 }
 
 /* =====================
-   RESPONSIVE
+   RESPONSIVE DESIGN
 ===================== */
 
 @media (max-width: 1200px) {
@@ -959,8 +986,22 @@
     justify-content: space-between;
   }
 
+  .navbar__logo {
+    flex-direction: column;
+    text-align: center;
+  }
+
   .main-content {
     padding: 20px;
+    gap: 20px;
+  }
+
+  .panel-card {
+    padding: 24px;
+  }
+
+  .transcription-panel {
+    padding: 24px;
   }
 
   .history-sidebar {
@@ -976,5 +1017,96 @@
     left: 20px;
     right: 20px;
     width: auto;
+    min-width: unset;
+  }
+
+  .action-btn {
+    padding: 8px 16px;
+    font-size: 0.875rem;
+  }
+
+  .icon-card__icon {
+    width: 80px;
+    height: 80px;
+    font-size: 3rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar {
+    padding: 12px 16px;
+  }
+
+  .navbar__icon {
+    width: 48px;
+    height: 48px;
+    font-size: 24px;
+  }
+
+  .navbar__title {
+    font-size: 1.25rem;
+  }
+
+  .main-content {
+    padding: 16px;
+  }
+
+  .panel-card,
+  .transcription-panel {
+    padding: 20px;
+    border-radius: 16px;
+  }
+
+  .icon-card {
+    padding: 24px 16px;
+  }
+
+  .transcription-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .action-btn {
+    width: 100%;
+  }
+}
+
+/* =====================
+   DARK MODE ENHANCEMENTS
+===================== */
+
+/* Add glow effect on focus for accessibility */
+.btn:focus,
+.action-btn:focus,
+.navbar__btn:focus,
+.history-card__btn:focus {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 2px;
+}
+
+/* Smooth transition for all interactive elements */
+button,
+.btn,
+.action-btn,
+.icon-card,
+.history-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Performance optimization - will-change for animated elements */
+.spinner,
+.status-dot,
+.btn-recording {
+  will-change: transform, opacity;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

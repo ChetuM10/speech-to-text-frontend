@@ -11,8 +11,11 @@
     "test": "vitest"
   },
   "dependencies": {
+    "axios": "^1.13.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "react-hot-toast": "^2.6.0",
+    "react-router-dom": "^7.9.5",
     "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
@@ -32,6 +35,6 @@
     "postcss": "^8.4.31",
     "tailwindcss": "^3.3.5",
     "vite": "^7.1.7",
-    "vitest": "^2.1.6"
+    "vitest": "^4.0.8"
   }
 }
